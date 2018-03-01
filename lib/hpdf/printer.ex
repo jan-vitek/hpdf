@@ -100,7 +100,6 @@ defmodule HPDF.Printer do
   def handle_call({:print_pdf, url, _opts}, from, state) do
     method(state.socket, "Page.enable", %{}, 1)
     method(state.socket, "Network.enable", %{}, 2)
-    method(state.socket, "Network.setRequestInterception", %{enabled: true}, 5)
 
     if state.cookie do
       method(state.socket, "Network.setCookie", state.cookie, 8)
