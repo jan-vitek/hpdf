@@ -88,10 +88,10 @@ defmodule HPDF.Browser do
       page_ws_uri: nil,
       monitor_ref: Process.monitor(pid),
     }
-
-    method(state.socket, "Target.createBrowserContext", %{}, session_state.id)
     new_state = put_in(state, [:sessions, session_state.id], session_state)
-    method(state.socket, "Browser.getVersion")
+
+    request_new_page_for_context(nil, session_state, state)
+
 
     {:noreply, %{new_state | session_counter: state.session_counter + 1}}
   end
@@ -134,6 +134,8 @@ defmodule HPDF.Browser do
     session = %{session | page_id: page_id,
                           page_ws_uri: page_ws_address(state, page_id)}
 
+    IO.puts(Kernel.inspect(session))
+
     GenServer.reply(session.reply_to, {:ok, session})
 
     new_state = put_in(state, [:sessions, session_id], session)
@@ -148,7 +150,7 @@ defmodule HPDF.Browser do
     method(
       socket,
       "Target.createTarget",
-      %{browserContextId: context_id, url: "about:_blank"},
+      %{url: "about:_blank"},
       method_id
     )
   end

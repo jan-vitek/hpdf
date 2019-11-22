@@ -24,7 +24,7 @@ defmodule HPDF.Printer do
   # https://chromedevtools.github.io/devtools-protocol/tot/Network/#method-setCookie
   defstruct socket: nil, # The web socket to use. This is given by the starting process.
             receiver: nil, # The receiver process. This is given by the starting process.
-            after_load_delay: 750, # How long to wait after the page is loaded before starting to print
+            after_load_delay: 10000, # How long to wait after the page is loaded before starting to print
             cookie: nil, # The cookie options https://chromedevtools.github.io/devtools-protocol/tot/Network/#method-setCookie
             active_requests: 0, # A counter of the active requests that are in-progress (not including web-sockets)
             page_url: nil, # The URL of the page to print
@@ -45,7 +45,7 @@ defmodule HPDF.Printer do
   def init(args) do
     {:ok, init_state} = super(args)
 
-    afd = Keyword.get(args, :after_load_delay, 750)
+    afd = Keyword.get(args, :after_load_delay, 10000)
     headers = Keyword.get(args, :page_headers)
     cookie = Keyword.get(args, :cookie)
     print_options = Keyword.get(args, :print_options, %{})
@@ -165,26 +165,15 @@ defmodule HPDF.Printer do
     {:text, %{"method" => "Network.requestWillBeSent"}},
     %{timer: timer} = state
   ) do
-    if timer do
-      Process.cancel_timer(timer)
-    end
-    {:noreply, %{state | active_requests: state.active_requests + 1, timer: nil}}
+    {:noreply, %{state | active_requests: state.active_requests + 1, timer: timer}}
   end
 
   def handle_frame(
     {:text, %{"method" => "Network.responseReceived"}},
     %{timer: timer, active_requests: count} = state
   ) do
-    if timer do
-      Process.cancel_timer(timer)
-    end
 
-    new_timer =
-      if state.page_loaded? && count <= 1 do
-        Process.send_after(self(), {:print_page}, state.after_load_delay)
-      end
-
-    {:noreply, %{state | active_requests: count - 1, timer: new_timer}}
+    {:noreply, %{state | active_requests: count - 1, timer: timer}}
   end
 
   def handle_frame(

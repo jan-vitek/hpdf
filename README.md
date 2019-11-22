@@ -1,3 +1,8 @@
+### In this fork
+
+* Some timer resets in `printer.ex` are removed. I think websocket messages might have beeen resetting some of them resulting in timeouts.
+* Quick and dirty fix in `browser.ex` to make it work with chrome >71 which does not respond to Target.createBrowserContext. There is not a new  browser context for each request now. Also there might be some optimalization issues as I did not check if the created pages are being closed.
+
 # HPDF
 
 Headless PDF printing (with Chrome)
